@@ -1,6 +1,7 @@
 payload:
   # 色花堂相关
   - DOMAIN-KEYWORD,sehuatang        # 匹配任何包含 sehuatang 的域名
+  - DOMAIN-SUFFIX,sehuatang.net
   - DOMAIN-SUFFIX,sehuatang.org      # 匹配 sehuatang.org 及其子域名
   - DOMAIN-SUFFIX,98ht.com           # 匹配色花堂常用备用域名
   - DOMAIN-SUFFIX,98tang.com         # 匹配色花堂常用备用域名
