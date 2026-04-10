@@ -7,31 +7,34 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    permissions: # 显式声明权限，双重保险
+    permissions:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4 # 升级到 v4 解决警告
+        uses: actions/checkout@v4
 
       - name: Batch Download
         run: |
           mkdir -p list
+          # 1. 批量同步 .list 文件 (来自 blackmatrix7 库)
           RULES=(
             "Instagram" "Facebook" "Twitter" "Reddit" "Pinterest" 
             "Twitch" "Advertising" "Privacy" "Hijacking" "Global" 
-            "Steam" "Epic" "EA" "Blizzard" "UBI" "Sony" "Nintendo" "Docker"
+            "Steam" "Epic" "EA" "Blizzard" "UBI" "Sony" "Nintendo" 
+            "Docker" "Claude" "MetaAi" "Telegram"
           )
           
           for rule in "${RULES[@]}"; do
             echo "正在同步: $rule"
-            # 备注：黑客矩阵库里的 Advertising 在路径和文件名上略有差异，这里做了兼容处理
             curl -L "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/$rule/$rule.list" -o "list/$rule.list"
           done
 
+          # 2. 批量同步 .mrs 文件 (来自 metacubex 库)
           echo "正在同步 MRS 文件..."
           curl -L "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/openai.mrs" -o "list/openai.mrs"
           curl -L "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/github.mrs" -o "list/github.mrs"
           curl -L "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/telegram.mrs" -o "list/telegram.mrs"
+          curl -L "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/perplexity.mrs" -o "list/perplexity.mrs"
 
       - name: Push Changes
         run: |
