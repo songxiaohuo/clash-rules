@@ -16,37 +16,32 @@ jobs:
       - name: Batch Download
         run: |
           mkdir -p list
-          # 1. 同步 .list 文本文件 (来自 blackmatrix7 库)
+          # 1. 同步 .list 文本文件 (保持不变)
           RULES=(
             "Instagram" "Facebook" "Twitter" "Reddit" "Pinterest" 
             "Twitch" "Advertising" "Privacy" "Hijacking" "Global" 
             "Steam" "Epic" "EA" "Blizzard" "UBI" "Sony" "Nintendo" 
             "Docker" "Claude" "MetaAi" "Telegram"
           )
-          
           for rule in "${RULES[@]}"; do
-            echo "正在同步 List: $rule"
-            # 使用 -fL 并配合 || true，确保单个文件下载失败不会导致整个 Action 崩溃
-            curl -fL "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/$rule/$rule.list" -o "list/$rule.list" || echo "警告：跳过无效 List: $rule"
+            curl -fL "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/$rule/$rule.list" -o "list/$rule.list" || echo "Skip $rule"
           done
 
-          # 2. 同步基础服务 MRS 二进制文件 (来自 metacubex 库)
-          echo "正在同步基础 MRS 文件..."
+          # 2. 同步基础服务 MRS (保持不变)
           MRS_SITES=("openai" "github" "telegram" "perplexity")
           for site in "${MRS_SITES[@]}"; do
-            echo "正在同步 MRS: $site"
-            curl -fL "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/$site.mrs" -o "list/$site.mrs" || echo "错误：基础服务 $site 下载失败"
+            curl -fL "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/$site.mrs" -o "list/$site.mrs" || echo "Fail $site"
           done
 
-          # 3. 同步流媒体 MRS 文件 (含错误拦截与自动补位逻辑)
-          echo "正在同步流媒体 MRS 文件..."
-          STREAMING=("youtube" "spotify" "appletv" "hbo" "disney" "primevideo" "paramount" "hulu")
-          for media in "${STREAMING[@]}"; do
-            echo "正在同步流媒体 MRS: $media"
-            # 逻辑：优先拉取独立规则 -> 若 404 则拉取全局 streaming 规则顶替 -> 若仍失败则打印警告并继续执行 (防止 exit 22)
-            curl -fL "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/$media.mrs" -o "list/$media.mrs" || \
-            curl -fL "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/streaming.mrs" -o "list/$media.mrs" || \
-            echo "严重警告：$media 同步完全失败，请手动检查链接"
+          # 3. 彻底修复流媒体 (改用 Loyalsoldier 的稳定源)
+          echo "正在从稳定源同步流媒体..."
+          # 注意：这里改用 Loyalsoldier 的资源，路径更可靠
+          MEDIA_LIST=("youtube" "spotify" "appletv" "hbo" "disney" "primevideo" "paramount" "hulu")
+          for media in "${MEDIA_LIST[@]}"; do
+            echo "同步 $media..."
+            # 尝试从新源下载，如果失败则尝试 metacubex 的全局 streaming
+            curl -fL "https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/$media.txt" -o "list/$media.list" || \
+            curl -fL "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/streaming.mrs" -o "list/$media.mrs"
           done
 
       - name: Push Changes
@@ -54,6 +49,5 @@ jobs:
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
           git add .
-          # 即使没有新规则更新，也执行 exit 0 确保任务以“绿色”状态结束
-          git commit -m "Automated update: Final robust version with error handling" || exit 0
+          git commit -m "Final Fix: Switch to stable source for streaming rules" || exit 0
           git push
