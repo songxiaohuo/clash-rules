@@ -1,95 +1,30 @@
-name: Sync All Rules
-
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 0 * * *'
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # 提前适配 Node 24
-
-jobs:
-  sync:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Batch Download
+- name: Batch Download
         run: |
-          set -e
-
           mkdir -p list
-
-          echo "===== 同步 .list 规则 ====="
-
+          # 1. 同步 .list 文件
           RULES=(
-            "Instagram" "Facebook" "Twitter" "Reddit" "Pinterest"
-            "Twitch" "Advertising" "Privacy" "Hijacking" "Global"
-            "Steam" "Epic" "EA" "Blizzard" "UBI" "Sony" "Nintendo"
+            "Instagram" "Facebook" "Twitter" "Reddit" "Pinterest" 
+            "Twitch" "Advertising" "Privacy" "Hijacking" "Global" 
+            "Steam" "Epic" "EA" "Blizzard" "UBI" "Sony" "Nintendo" 
             "Docker" "Claude" "MetaAi" "Telegram"
           )
-
+          
           for rule in "${RULES[@]}"; do
-            echo "同步: $rule"
-            curl -f -L \
-              --connect-timeout 10 \
-              --max-time 60 \
-              "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/$rule/$rule.list" \
-              -o "list/$rule.list" \
-              || echo "❌ $rule 下载失败"
+            echo "正在同步: $rule"
+            # 建议加上 -f，防止下载到报错页面
+            curl -fL "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/$rule/$rule.list" -o "list/$rule.list" || echo "Skip $rule"
           done
 
-
-          echo "===== 同步 .mrs 规则 ====="
-
+          # 2. 同步 .mrs 文件 (已去掉报错的两个)
+          echo "正在同步 MRS 文件..."
           MRS_SITES=(
-            "openai"
-            "github"
-            "telegram"
-            "perplexity"
-            "youtube"
-            "spotify"
-            "netflix"
-            "disney"
-            "primevideo"
-            "hbo"
-            "hulu"
-            "apple"
-            "streaming"
+            "openai" "github" "telegram" "perplexity" 
+            "youtube" "spotify" "hbo" 
+            "disney" "primevideo" "hulu"
           )
 
           for site in "${MRS_SITES[@]}"; do
-            echo "同步 MRS: $site"
-            curl -f -L \
-              --connect-timeout 10 \
-              --max-time 60 \
-              "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/$site.mrs" \
-              -o "list/$site.mrs" \
-              || echo "⚠️ $site 不存在，已跳过"
+            echo "正在同步 MRS: $site"
+            # 建议加上 -f，确保只保存成功的二进制文件
+            curl -fL "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/$site.mrs" -o "list/$site.mrs" || echo "Fail $site"
           done
-
-
-          echo "===== 生成替代规则 ====="
-
-          if [ -s "list/streaming.mrs" ]; then
-            cp list/streaming.mrs list/appletv.mrs
-            cp list/streaming.mrs list/paramount.mrs
-            echo "✅ 已用 streaming 替代 appletv / paramount"
-          else
-            echo "❌ streaming.mrs 不存在，替代失败"
-          fi
-
-
-      - name: Commit & Push
-        run: |
-          git config --local user.email "actions@github.com"
-          git config --local user.name "GitHub Action"
-
-          git add list/
-
-          git commit -m "chore: auto update rules ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))" || exit 0
-          git push
