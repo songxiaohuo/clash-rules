@@ -16,7 +16,7 @@ jobs:
       - name: Batch Download
         run: |
           mkdir -p list
-          # 1. 批量同步 .list 文件 (来自 blackmatrix7 库)
+          # 1. 同步 .list 文件 (来自 blackmatrix7 库)
           RULES=(
             "Instagram" "Facebook" "Twitter" "Reddit" "Pinterest" 
             "Twitch" "Advertising" "Privacy" "Hijacking" "Global" 
@@ -29,17 +29,23 @@ jobs:
             curl -L "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/$rule/$rule.list" -o "list/$rule.list"
           done
 
-          # 2. 批量同步 .mrs 文件 (来自 metacubex 库)
+          # 2. 同步 .mrs 文件 (来自 metacubex 库)
           echo "正在同步 MRS 文件..."
-          curl -L "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/openai.mrs" -o "list/openai.mrs"
-          curl -L "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/github.mrs" -o "list/github.mrs"
-          curl -L "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/telegram.mrs" -o "list/telegram.mrs"
-          curl -L "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/perplexity.mrs" -o "list/perplexity.mrs"
+          MRS_SITES=(
+            "openai" "github" "telegram" "perplexity" 
+            "youtube" "spotify" "appletv" "hbo" 
+            "disney" "primevideo" "paramount" "hulu"
+          )
+
+          for site in "${MRS_SITES[@]}"; do
+            echo "正在同步 MRS: $site"
+            curl -L "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/$site.mrs" -o "list/$site.mrs"
+          done
 
       - name: Push Changes
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
           git add .
-          git commit -m "Automated update for all rules" || exit 0
+          git commit -m "Automated update including streaming services" || exit 0
           git push
