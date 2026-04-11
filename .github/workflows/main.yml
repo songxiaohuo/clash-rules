@@ -16,7 +16,7 @@ jobs:
       - name: Batch Download
         run: |
           mkdir -p list
-          # 1. 同步 .list 文件 (来自 blackmatrix7 库)
+          # 1. 同步 .list 文本文件 (来自 blackmatrix7 库)
           RULES=(
             "Instagram" "Facebook" "Twitter" "Reddit" "Pinterest" 
             "Twitch" "Advertising" "Privacy" "Hijacking" "Global" 
@@ -25,32 +25,27 @@ jobs:
           )
           
           for rule in "${RULES[@]}"; do
-            echo "正在同步: $rule"
-            # 使用 -f 参数，如果 404 会报错而不是下载错误页面
-            curl -fL "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/$rule/$rule.list" -o "list/$rule.list" || echo "跳过无效规则: $rule"
+            echo "正在同步 List: $rule"
+            # -f 参数确保 404 时报错跳过，不下载错误网页文本
+            curl -fL "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/$rule/$rule.list" -o "list/$rule.list" || echo "跳过无效 List: $rule"
           done
 
-          # 2. 同步 .mrs 文件 (修正 metacubex 路径)
-          echo "正在同步 MRS 文件..."
-          
-          # 基础服务类 (在 geosite 目录下)
+          # 2. 同步基础服务 MRS 二进制文件 (来自 metacubex 库)
+          echo "正在同步基础 MRS 文件..."
           MRS_SITES=("openai" "github" "telegram" "perplexity")
           for site in "${MRS_SITES[@]}"; do
-            curl -fL "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/$site.mrs" -o "list/$site.mrs" || echo "下载失败: $site"
+            echo "正在同步 MRS: $site"
+            curl -fL "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/$site.mrs" -o "list/$site.mrs" || echo "基础服务 MRS 下载失败: $site"
           done
 
-          # 流媒体类 (注意：MetaCube 仓库中这些文件可能在 geosite 目录下，但由于上游更新，建议强制拉取全小写名)
+          # 3. 同步流媒体 MRS 文件 (含自动补位逻辑，解决 appletv/paramount 报错)
+          echo "正在同步流媒体 MRS 文件..."
           STREAMING=("youtube" "spotify" "appletv" "hbo" "disney" "primevideo" "paramount" "hulu")
           for media in "${STREAMING[@]}"; do
             echo "正在同步流媒体 MRS: $media"
-            # 确保使用全小写路径
+            # 逻辑：优先拉取独立规则 -> 若 404 则拉取全量流媒体规则顶替 -> 确保文件始终是合法的二进制格式
             curl -fL "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/$media.mrs" -o "list/$media.mrs" || \
-            curl -fL "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/streaming.mrs" -o "list/$media.mrs" # 兜底逻辑
-          done
-
-          for site in "${MRS_SITES[@]}"; do
-            echo "正在同步 MRS: $site"
-            curl -L "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/$site.mrs" -o "list/$site.mrs"
+            curl -fL "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/streaming.mrs" -o "list/$media.mrs"
           done
 
       - name: Push Changes
@@ -58,5 +53,5 @@ jobs:
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
           git add .
-          git commit -m "Automated update including streaming services" || exit 0
+          git commit -m "Automated update: Fixed MRS binary format and added streaming fallback" || exit 0
           git push
