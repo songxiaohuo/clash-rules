@@ -26,8 +26,8 @@ jobs:
           
           for rule in "${RULES[@]}"; do
             echo "正在同步 List: $rule"
-            # -f 参数确保 404 时报错跳过，不下载错误网页文本
-            curl -fL "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/$rule/$rule.list" -o "list/$rule.list" || echo "跳过无效 List: $rule"
+            # 使用 -fL 并配合 || true，确保单个文件下载失败不会导致整个 Action 崩溃
+            curl -fL "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/$rule/$rule.list" -o "list/$rule.list" || echo "警告：跳过无效 List: $rule"
           done
 
           # 2. 同步基础服务 MRS 二进制文件 (来自 metacubex 库)
@@ -35,17 +35,18 @@ jobs:
           MRS_SITES=("openai" "github" "telegram" "perplexity")
           for site in "${MRS_SITES[@]}"; do
             echo "正在同步 MRS: $site"
-            curl -fL "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/$site.mrs" -o "list/$site.mrs" || echo "基础服务 MRS 下载失败: $site"
+            curl -fL "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/$site.mrs" -o "list/$site.mrs" || echo "错误：基础服务 $site 下载失败"
           done
 
-          # 3. 同步流媒体 MRS 文件 (含自动补位逻辑，解决 appletv/paramount 报错)
+          # 3. 同步流媒体 MRS 文件 (含错误拦截与自动补位逻辑)
           echo "正在同步流媒体 MRS 文件..."
           STREAMING=("youtube" "spotify" "appletv" "hbo" "disney" "primevideo" "paramount" "hulu")
           for media in "${STREAMING[@]}"; do
             echo "正在同步流媒体 MRS: $media"
-            # 逻辑：优先拉取独立规则 -> 若 404 则拉取全量流媒体规则顶替 -> 确保文件始终是合法的二进制格式
+            # 逻辑：优先拉取独立规则 -> 若 404 则拉取全局 streaming 规则顶替 -> 若仍失败则打印警告并继续执行 (防止 exit 22)
             curl -fL "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/$media.mrs" -o "list/$media.mrs" || \
-            curl -fL "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/streaming.mrs" -o "list/$media.mrs"
+            curl -fL "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/streaming.mrs" -o "list/$media.mrs" || \
+            echo "严重警告：$media 同步完全失败，请手动检查链接"
           done
 
       - name: Push Changes
@@ -53,5 +54,6 @@ jobs:
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
           git add .
-          git commit -m "Automated update: Fixed MRS binary format and added streaming fallback" || exit 0
+          # 即使没有新规则更新，也执行 exit 0 确保任务以“绿色”状态结束
+          git commit -m "Automated update: Final robust version with error handling" || exit 0
           git push
