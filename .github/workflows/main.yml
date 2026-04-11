@@ -1,4 +1,4 @@
-name: Sync All Rules (Production)
+name: Sync All Rules
 
 on:
   workflow_dispatch:
@@ -16,19 +16,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4   # 后续可升级 v5
 
-      # ================================
-      # 1. 下载规则（带容错 + 校验）
-      # ================================
-      - name: Download Rules
+      - name: Batch Download
         run: |
-          set -e
-
           mkdir -p list
-          TMP_DIR=$(mktemp -d)
 
-          echo "===== 同步 .list ====="
+          echo "===== 同步 .list 规则 ====="
 
           RULES=(
             "Instagram" "Facebook" "Twitter" "Reddit" "Pinterest"
@@ -39,22 +33,14 @@ jobs:
 
           for rule in "${RULES[@]}"; do
             echo "同步: $rule"
-            URL="https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/$rule/$rule.list"
-
-            if curl -f -L --connect-timeout 10 --max-time 60 "$URL" -o "$TMP_DIR/$rule.list"; then
-              # 校验文件非空
-              if [ -s "$TMP_DIR/$rule.list" ]; then
-                mv "$TMP_DIR/$rule.list" "list/$rule.list"
-              else
-                echo "⚠️ $rule 空文件，跳过"
-              fi
-            else
-              echo "❌ $rule 下载失败"
-            fi
+            curl -f -L \
+              "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/$rule/$rule.list" \
+              -o "list/$rule.list" \
+              || echo "❌ $rule 下载失败"
           done
 
 
-          echo "===== 同步 .mrs ====="
+          echo "===== 同步 .mrs 规则 ====="
 
           MRS_SITES=(
             "openai"
@@ -68,55 +54,22 @@ jobs:
             "primevideo"
             "hbo"
             "hulu"
-            "apple"        # 替代 appletv
-            "streaming"    # 替代 paramount
+            "apple"          # ✅ 替代 appletv
+            "streaming"      # ✅ 替代 paramount
           )
 
           for site in "${MRS_SITES[@]}"; do
             echo "同步 MRS: $site"
-            URL="https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/$site.mrs"
-
-            if curl -f -L --connect-timeout 10 --max-time 60 "$URL" -o "$TMP_DIR/$site.mrs"; then
-              if [ -s "$TMP_DIR/$site.mrs" ]; then
-                mv "$TMP_DIR/$site.mrs" "list/$site.mrs"
-              else
-                echo "⚠️ $site 空文件，跳过"
-              fi
-            else
-              echo "⚠️ $site 不存在，跳过"
-            fi
+            curl -f -L \
+              "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/$site.mrs" \
+              -o "list/$site.mrs" \
+              || echo "⚠️ $site 不存在，已跳过"
           done
 
-
-      # ================================
-      # 2. 仅有变更才提交（核心优化）
-      # ================================
-      - name: Detect Changes
-        id: diff
-        run: |
-          if git diff --quiet && git diff --cached --quiet; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-          else
-            echo "changed=true" >> $GITHUB_OUTPUT
-          fi
-
-      # ================================
-      # 3. 提交（仅变更时）
-      # ================================
-      - name: Commit & Push
-        if: steps.diff.outputs.changed == 'true'
+      - name: Push Changes
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
-
-          git add list/
-
-          git commit -m "chore: auto update rules ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
+          git add .
+          git commit -m "Automated update (fixed missing mrs rules)" || exit 0
           git push
-
-      # ================================
-      # 4. 无变化提示（避免误判）
-      # ================================
-      - name: No Changes
-        if: steps.diff.outputs.changed == 'false'
-        run: echo "✅ 无规则更新"
