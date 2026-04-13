@@ -11,3 +11,4 @@ payload:
   - DOMAIN-SUFFIX,sunlogin.net,DIRECT
   - DOMAIN-SUFFIX,orayimg.com,DIRECT
   - DOMAIN-SUFFIX,oray.net,DIRECT
+  - DOMAIN-KEYWORD,oray,DIRECT  
