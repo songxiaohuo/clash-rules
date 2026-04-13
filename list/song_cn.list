@@ -7,3 +7,7 @@ payload:
   - DOMAIN,qingyetech.cn
   - DOMAIN,songxiaohuo.cn
   - DOMAIN-SUFFIX,nxboom.com
+  - DOMAIN-SUFFIX,oray.com,DIRECT
+  - DOMAIN-SUFFIX,sunlogin.net,DIRECT
+  - DOMAIN-SUFFIX,orayimg.com,DIRECT
+  - DOMAIN-SUFFIX,oray.net,DIRECT
