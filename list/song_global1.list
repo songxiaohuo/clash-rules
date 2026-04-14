@@ -4,3 +4,4 @@ payload:
   - DOMAIN-KEYWORD,telegram
   - DOMAIN-KEYWORD,github
   - DOMAIN-KEYWORD,hitun
+  - DOMAIN-SUFFIX,nxonearth.com
