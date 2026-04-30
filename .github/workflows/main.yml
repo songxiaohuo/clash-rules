@@ -19,12 +19,12 @@ jobs:
         run: |
           mkdir -p list
 
-          # 1. 同步 blackmatrix7 Clash .list，并转换为 Shadowrocket 纯净版
+          # === 1. blackmatrix7 公共规则（含 TikTok）===
           RULES=(
             "Instagram" "Facebook" "Twitter" "Reddit" "Pinterest"
             "Twitch" "Advertising" "Privacy" "Hijacking" "Global"
             "Steam" "Epic" "EA" "Blizzard" "UBI" "Sony" "Nintendo"
-            "Docker" "Claude" "MetaAi" "Telegram"
+            "Docker" "Claude" "MetaAi" "Telegram" "TikTok"
           )
 
           for rule in "${RULES[@]}"; do
@@ -46,7 +46,7 @@ jobs:
             fi
           done
 
-          # 2. 同步 MetaCubeX .mrs，并生成 Shadowrocket 文本规则
+          # === 2. MetaCubeX (mrs + 文本规则转 Shadowrocket) ===
           MRS_SITES=(
             "openai" "github" "telegram" "perplexity"
             "youtube" "spotify" "hbo" "disney" "primevideo" "hulu"
@@ -56,12 +56,15 @@ jobs:
           for site in "${MRS_SITES[@]}"; do
             echo "正在同步 MRS 和文本规则: $site"
 
+            # 下载 mrs（二进制）
             curl -fL "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/$site.mrs" \
               -o "list/$site.mrs" || echo "Fail $site mrs"
 
+            # 下载文本规则
             curl -fL "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/$site.list" \
               -o "list/${site}_raw.list" || echo "Fail $site list"
 
+            # 转换为 Shadowrocket 格式
             if [ -f "list/${site}_raw.list" ]; then
               sed -E '
                 s/#.*//;
@@ -85,5 +88,5 @@ jobs:
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
           git add .
-          git commit -m "Auto-sync: Added Shadowrocket pure list support" || exit 0
+          git commit -m "Auto-sync: Update sr rules (TikTok + MRS fixed)" || exit 0
           git push
