@@ -13,10 +13,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Batch Download
+      - name: Batch Download and Convert
         run: |
           mkdir -p list
-          # 1. 同步 .list 文件 (来自 blackmatrix7 库)
+          
+          # 1. 同步 .list 文件并转换为小火箭纯净版
           RULES=(
             "Instagram" "Facebook" "Twitter" "Reddit" "Pinterest" 
             "Twitch" "Advertising" "Privacy" "Hijacking" "Global" 
@@ -25,12 +26,18 @@ jobs:
           )
           
           for rule in "${RULES[@]}"; do
-            echo "正在同步: $rule"
+            echo "正在同步并转换: $rule"
+            # 下载原始 Clash 格式 list
             curl -fL "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/$rule/$rule.list" -o "list/$rule.list" || echo "Skip $rule"
+            
+            # 转换为 Shadowrocket 纯净版: 去掉 "- " 前缀，去掉注释，去掉空格
+            if [ -f "list/$rule.list" ]; then
+              sed -E 's/^- //; s/#.*//; s/ //g; /^$/d' "list/$rule.list" > "list/${rule}_sr.list"
+            fi
           done
 
-          # 2. 同步 .mrs 文件 (已剔除 appletv 和 paramount)
-          echo "正在同步 MRS 文件..."
+          # 2. 同步 .mrs 文件，并同步抓取文本版供小火箭使用
+          echo "正在处理 MRS 及对应的文本规则..."
           MRS_SITES=(
             "openai" "github" "telegram" "perplexity" 
             "youtube" "spotify" "hbo" "disney" "primevideo" "hulu"
@@ -38,7 +45,19 @@ jobs:
 
           for site in "${MRS_SITES[@]}"; do
             echo "正在同步 MRS: $site"
-            curl -fL "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/$site.mrs" -o "list/$site.mrs" || echo "Fail $site"
+            # 下载二进制 mrs (供 OpenClash 使用)
+            curl -fL "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/$site.mrs" -o "list/$site.mrs" || echo "Fail $site mrs"
+            
+            # 下载对应的源文本 (从 MetaCubeX 的源数据中抓取)
+            # 注意：MetaCubeX 的源文件通常是每行一个域名，非常适合小火箭
+            echo "正在抓取文本版: $site"
+            curl -fL "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/master/geo/geosite/$site.list" -o "list/${site}_sr.list" || \
+            curl -fL "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/master/geo/geosite/$site.txt" -o "list/${site}_sr.list" || echo "Fail $site text"
+            
+            # 简单清洗确保兼容性
+            if [ -f "list/${site}_sr.list" ]; then
+              sed -i -E 's/payload://; s/^- //; s/#.*//; s/ //g; /^$/d' "list/${site}_sr.list"
+            fi
           done
 
       - name: Push Changes
@@ -46,5 +65,5 @@ jobs:
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
           git add .
-          git commit -m "Clean up rules and fix script syntax" || exit 0
+          git commit -m "Auto-sync: Added Shadowrocket pure list support" || exit 0
           git push
