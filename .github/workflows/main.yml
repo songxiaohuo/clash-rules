@@ -1,4 +1,5 @@
 name: Sync All Rules
+
 on:
   workflow_dispatch:
   schedule:
@@ -9,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -16,47 +18,65 @@ jobs:
       - name: Batch Download and Convert
         run: |
           mkdir -p list
-          
-          # 1. 同步 .list 文件并转换为小火箭纯净版
+
+          # 1. 同步 blackmatrix7 Clash .list，并转换为 Shadowrocket 纯净版
           RULES=(
-            "Instagram" "Facebook" "Twitter" "Reddit" "Pinterest" 
-            "Twitch" "Advertising" "Privacy" "Hijacking" "Global" 
-            "Steam" "Epic" "EA" "Blizzard" "UBI" "Sony" "Nintendo" 
+            "Instagram" "Facebook" "Twitter" "Reddit" "Pinterest"
+            "Twitch" "Advertising" "Privacy" "Hijacking" "Global"
+            "Steam" "Epic" "EA" "Blizzard" "UBI" "Sony" "Nintendo"
             "Docker" "Claude" "MetaAi" "Telegram"
           )
-          
+
           for rule in "${RULES[@]}"; do
             echo "正在同步并转换: $rule"
-            # 下载原始 Clash 格式 list
-            curl -fL "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/$rule/$rule.list" -o "list/$rule.list" || echo "Skip $rule"
-            
-            # 转换为 Shadowrocket 纯净版: 去掉 "- " 前缀，去掉注释，去掉空格
-            if [ -f "list/$rule.list" ]; then
-              sed -E 's/^- //; s/#.*//; s/ //g; /^$/d' "list/$rule.list" > "list/${rule}_sr.list"
+
+            curl -fL "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/$rule/$rule.list" \
+              -o "list/${rule}_raw.list" || echo "Skip $rule"
+
+            if [ -f "list/${rule}_raw.list" ]; then
+              sed -E '
+                s/#.*//;
+                s/^[[:space:]]*-[[:space:]]*//;
+                s/^[[:space:]]+//;
+                s/[[:space:]]+$//;
+                /^$/d
+              ' "list/${rule}_raw.list" > "list/${rule}_sr.list"
+
+              rm -f "list/${rule}_raw.list"
             fi
           done
 
-          # 2. 同步 .mrs 文件，并同步抓取文本版供小火箭使用
-          echo "正在处理 MRS 及对应的文本规则..."
+          # 2. 同步 MetaCubeX .mrs，并生成 Shadowrocket 文本规则
           MRS_SITES=(
-            "openai" "github" "telegram" "perplexity" 
+            "openai" "github" "telegram" "perplexity"
             "youtube" "spotify" "hbo" "disney" "primevideo" "hulu"
+            "apple" "appletv" "netflix"
           )
 
           for site in "${MRS_SITES[@]}"; do
-            echo "正在同步 MRS: $site"
-            # 下载二进制 mrs (供 OpenClash 使用)
-            curl -fL "https://raw.githubusercontent.com/metacubex/meta-rules-dat/meta/geo/geosite/$site.mrs" -o "list/$site.mrs" || echo "Fail $site mrs"
-            
-            # 下载对应的源文本 (从 MetaCubeX 的源数据中抓取)
-            # 注意：MetaCubeX 的源文件通常是每行一个域名，非常适合小火箭
-            echo "正在抓取文本版: $site"
-            curl -fL "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/master/geo/geosite/$site.list" -o "list/${site}_sr.list" || \
-            curl -fL "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/master/geo/geosite/$site.txt" -o "list/${site}_sr.list" || echo "Fail $site text"
-            
-            # 简单清洗确保兼容性
-            if [ -f "list/${site}_sr.list" ]; then
-              sed -i -E 's/payload://; s/^- //; s/#.*//; s/ //g; /^$/d' "list/${site}_sr.list"
+            echo "正在同步 MRS 和文本规则: $site"
+
+            curl -fL "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/$site.mrs" \
+              -o "list/$site.mrs" || echo "Fail $site mrs"
+
+            curl -fL "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/$site.list" \
+              -o "list/${site}_raw.list" || echo "Fail $site list"
+
+            if [ -f "list/${site}_raw.list" ]; then
+              sed -E '
+                s/#.*//;
+                s/^[[:space:]]*-[[:space:]]*//;
+                s/^domain:/DOMAIN,/;
+                s/^domain-suffix:/DOMAIN-SUFFIX,/;
+                s/^full:/DOMAIN,/;
+                s/^keyword:/DOMAIN-KEYWORD,/;
+                s/^regexp:/URL-REGEX,/;
+                s/^[[:space:]]+//;
+                s/[[:space:]]+$//;
+                /^$/d
+              ' "list/${site}_raw.list" > "list/${site}_sr.list"
+
+              rm -f "list/${site}_raw.list"
             fi
           done
 
