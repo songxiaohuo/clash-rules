@@ -1,5 +1,5 @@
-DOMAIN-SUFFIX,t-mobile.com
-DOMAIN-SUFFIX,tmobile.com
-DOMAIN-SUFFIX,tmo.com
-DOMAIN-SUFFIX,tmocache.com
-DOMAIN-SUFFIX,api.t-mobile.com
+payload:
+  - DOMAIN-SUFFIX,t-mobile.com
+  - DOMAIN-SUFFIX,tmo.com
+  - DOMAIN-SUFFIX,tmocache.com
+  - DOMAIN-SUFFIX,api.t-mobile.com
