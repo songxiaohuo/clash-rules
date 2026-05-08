@@ -1,0 +1,6 @@
+DOMAIN-SUFFIX,3gppnetwork.org
+DOMAIN-KEYWORD,epdg
+DOMAIN-KEYWORD,ims
+DOMAIN-KEYWORD,volte
+IP-CIDR,172.16.0.0/12,no-resolve
+IP-CIDR,10.0.0.0/8,no-resolve
