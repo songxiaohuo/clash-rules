@@ -1,0 +1,9 @@
+#账户系统
+DOMAIN-SUFFIX,my.t-mobile.com
+DOMAIN-SUFFIX,identity.t-mobile.com
+DOMAIN-SUFFIX,login.t-mobile.com
+DOMAIN-SUFFIX,ss.t-mobile.com
+DOMAIN-SUFFIX,auth.t-mobile.com
+DOMAIN-SUFFIX,okta.com
+DOMAIN-SUFFIX,oktacdn.com
+DOMAIN-SUFFIX,oktaidentity.com
