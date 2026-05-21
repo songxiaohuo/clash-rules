@@ -28,3 +28,6 @@ payload:
   - DOMAIN-SUFFIX,xrk.top,DIRECT
   - PROCESS-NAME,SunloginClient.exe,DIRECT
   - PROCESS-NAME,SunloginRemote.exe,DIRECT
+  - DOMAIN-SUFFIX, oray.com
+  - DOMAIN-SUFFIX, oray.net
+  - DOMAIN-KEYWORD,oray
