@@ -21,3 +21,10 @@ payload:
   - DOMAIN-SUFFIX, vividsong.com
   - DOMAIN-SUFFIX, miguvideo.com
   - DOMAIN-SUFFIX, xazysoft.net
+  - DOMAIN-SUFFIX,sunlogin.com,DIRECT
+  - DOMAIN-SUFFIX,oray.com,DIRECT
+  - DOMAIN-SUFFIX,oray.net,DIRECT
+  - DOMAIN-SUFFIX,xrk.host,DIRECT
+  - DOMAIN-SUFFIX,xrk.top,DIRECT
+  - PROCESS-NAME,SunloginClient.exe,DIRECT
+  - PROCESS-NAME,SunloginRemote.exe,DIRECT
