@@ -31,3 +31,7 @@ payload:
   - DOMAIN-SUFFIX, oray.com
   - DOMAIN-SUFFIX, oray.net
   - DOMAIN-KEYWORD,oray
+  - DOMAIN-SUFFIX,oray.com,DIRECT
+  - DOMAIN-SUFFIX,sundns.com,DIRECT
+  - DOMAIN-SUFFIX,sunlogin.net,DIRECT
+  - DOMAIN-SUFFIX,orayimg.com,DIRECT
