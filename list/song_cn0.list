@@ -35,3 +35,14 @@ payload:
   - DOMAIN-SUFFIX,sundns.com,DIRECT
   - DOMAIN-SUFFIX,sunlogin.net,DIRECT
   - DOMAIN-SUFFIX,orayimg.com,DIRECT
+  - DOMAIN-SUFFIX,battle.net,DIRECT
+  - DOMAIN-SUFFIX,blizzard.com,DIRECT
+  - DOMAIN-SUFFIX,blizzard.cn,DIRECT
+  - DOMAIN-SUFFIX,blzstatic.cn,DIRECT
+  - DOMAIN-SUFFIX,blzstatic.com,DIRECT
+  - DOMAIN-SUFFIX,activision.com,DIRECT
+  - DOMAIN-SUFFIX,callofduty.com,DIRECT
+  - DOMAIN-SUFFIX,akamaized.net,DIRECT
+  - DOMAIN-SUFFIX,edgesuite.net,DIRECT
+  - DOMAIN-SUFFIX,edgekey.net,DIRECT
+  - DOMAIN-SUFFIX,163.com,DIRECT
