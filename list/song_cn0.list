@@ -46,3 +46,4 @@ payload:
   - DOMAIN-SUFFIX,edgesuite.net,DIRECT
   - DOMAIN-SUFFIX,edgekey.net,DIRECT
   - DOMAIN-SUFFIX,163.com,DIRECT
+  - DOMAIN-SUFFIX,deepseek.com
